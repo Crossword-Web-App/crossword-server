@@ -6,14 +6,24 @@ const app = express()
 module.exports = app
 
 const createApp = () => {
+
+  app.use(function(req, res, next) {
+    res.header('Access-Control-Allow-Origin', '*')
+    res.header(
+      'Access-Control-Allow-Headers',
+      'Origin, X-Requested-With, Content-Type, Accept'
+    )
+    next()
+  })
+
   // logging middleware
   app.use(morgan('dev'))
 
   // body parsing middleware
   app.use(express.json())
-  app.use(express.urlencoded({extended: true}))
+  app.use(express.urlencoded({ extended: true }))
 
-// auth and api routes
+  // auth and api routes
   app.use('/api', require('./api'))
 
   // any remaining requests with an extension (.js, .css, etc.) send 404
@@ -40,9 +50,7 @@ const startListening = () => {
   const server = app.listen(PORT, () =>
     console.log(`Mixing it up on port ${PORT}`)
   )
-
 }
-
 
 async function bootApp() {
   await createApp()
