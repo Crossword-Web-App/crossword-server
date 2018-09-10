@@ -6,7 +6,6 @@ const app = express()
 module.exports = app
 
 const createApp = () => {
-
   app.use(function(req, res, next) {
     res.header('Access-Control-Allow-Origin', '*')
     res.header(
@@ -47,8 +46,8 @@ const createApp = () => {
 
 const startListening = () => {
   // start listening (and create a 'server' object representing our server)
-  const server = app.listen(PORT, () =>
-    console.log(`Mixing it up on port ${PORT}`)
+  const server = app.listen(process.env.PORT || PORT, () =>
+    console.log(`Serving on port ${process.env.PORT || PORT}`)
   )
 }
 
