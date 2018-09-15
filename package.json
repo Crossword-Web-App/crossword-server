@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "nodemon node index.js",
     "deploy": "scripts/deploy",
     "test": "echo \"Error: no test specified\" && exit 1",
     "postinstall": "touch secrets.js"
@@ -13,10 +13,17 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "connect-mongo": "^2.0.1",
     "express": "^4.16.3",
+    "express-session": "^1.15.6",
     "fs": "0.0.1-security",
-    "mongodb": "^3.1.4",
+    "mongodb": "~3.1.4",
     "morgan": "^1.9.0",
+    "passport": "^0.4.0",
+    "passport-google-oauth": "^1.0.0",
     "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "nodemon": "^1.18.4"
   }
 }

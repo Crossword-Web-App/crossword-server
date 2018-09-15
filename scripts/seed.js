@@ -1,6 +1,7 @@
 const mongodb = require('mongodb')
-let { MONGODB_URI, DB_NAME } = require('../secrets')
 let fs = require('fs')
+
+if (process.env.NODE_ENV !== 'production') require('../secrets')
 
 let seedData = []
 let json = {}
@@ -11,14 +12,12 @@ for (let i = 1; i < files.length; i++) {
 }
 
 const putStuffInMongo = data => {
-  MONGODB_URI = process.env.MONGODB_URI || MONGODB_URI
-  DB_NAME = process.env.DB_NAME || DB_NAME
   mongodb.MongoClient.connect(
-    MONGODB_URI,
+    process.env.MONGODB_URI,
     function(err, client) {
       if (err) throw err
 
-      let db = client.db(DB_NAME)
+      let db = client.db(process.env.DB_NAME)
 
       let crosswords = db.collection('crosswords')
 
