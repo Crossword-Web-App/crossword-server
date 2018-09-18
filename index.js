@@ -1,46 +1,90 @@
 const path = require('path')
 const express = require('express')
 const morgan = require('morgan')
+const session = require('express-session')
+const MongoStore = require('connect-mongo')(session)
+const ObjectID = require('mongodb').ObjectID
+const passport = require('passport')
+const MongoDB = require('./db/db')
 const PORT = process.env.PORT || 8080
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000'
 const app = express()
 module.exports = app
 
+if (process.env.NODE_ENV !== 'production') require('./secrets')
+
 const createApp = () => {
-  app.use(function(req, res, next) {
-    res.header('Access-Control-Allow-Origin', '*')
-    res.header(
-      'Access-Control-Allow-Headers',
-      'Origin, X-Requested-With, Content-Type, Accept'
-    )
-    next()
-  })
 
-  // logging middleware
-  app.use(morgan('dev'))
+  MongoDB.connectDB(err => {
 
-  // body parsing middleware
-  app.use(express.json())
-  app.use(express.urlencoded({ extended: true }))
+    // get db and collections
+    const db = MongoDB.getDB()
+    const users = require('./db/collections/users')
 
-  // auth and api routes
-  app.use('/api', require('./api'))
+    // logging middleware
+    app.use(morgan('dev'))
 
-  // any remaining requests with an extension (.js, .css, etc.) send 404
-  app.use((req, res, next) => {
-    if (path.extname(req.path).length) {
-      const err = new Error('Not found')
-      err.status = 404
-      next(err)
-    } else {
+    // body parsing middleware
+    app.use(express.json())
+    app.use(express.urlencoded({ extended: true }))
+
+    app.use(function(req, res, next) {
+      res.header('Access-Control-Allow-Origin', CLIENT_URL)
+      res.header(
+        'Access-Control-Allow-Headers',
+        'Origin, X-Requested-With, Content-Type, Accept'
+      )
+      res.header(
+        'Access-Control-Allow-Credentials', 'true'
+      )
       next()
-    }
-  })
+    })
 
-  // error handling endware
-  app.use((err, req, res, next) => {
-    console.error(err)
-    console.error(err.stack)
-    res.status(err.status || 500).send(err.message || 'Internal server error.')
+    // passport registration
+    passport.serializeUser((user, done) => done(null, user._id))
+    passport.deserializeUser(async (_id, done) => {
+      const o_id = new ObjectID(_id);
+      await users.findOne({ '_id': o_id }, (err, user) => {
+        if (err) done(err)
+        else done(null, user)
+      })
+    })
+
+    // session middleware with passport
+    app.use(
+      session({
+        secret: process.env.SESSION_SECRET || 'my best friend is Alex',
+        store: new MongoStore({ db }),
+        resave: false,
+        saveUninitialized: false
+      })
+    )
+    app.use(passport.initialize())
+    app.use(passport.session())
+
+    // auth and api routes
+    app.use('/api', require('./api'))
+    app.use('/auth', require('./auth'))
+
+    // any remaining requests with an extension (.js, .css, etc.) send 404
+    app.use((req, res, next) => {
+      if (path.extname(req.path).length) {
+        const err = new Error('Not found')
+        err.status = 404
+        next(err)
+      } else {
+        next()
+      }
+    })
+
+    // error handling endware
+    app.use((err, req, res, next) => {
+      console.error(err)
+      console.error(err.stack)
+      res
+        .status(err.status || 500)
+        .send(err.message || 'Internal server error.')
+    })
   })
 }
 
@@ -51,7 +95,7 @@ const startListening = () => {
   )
 }
 
-async function bootApp() {
+const bootApp = async () => {
   await createApp()
   await startListening()
 }
