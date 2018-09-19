@@ -40,6 +40,19 @@ router.put('/:id/crossword', async (req, res, next) => {
   )
 })
 
+router.get('/:id/crossword/:crosswordId', async (req, res, next) => {
+  const userID = req.params.id
+  const crosswordID = req.params.crosswordId
+  userCrosswords.findOne(
+    { userID, 'crossword.id': +crosswordID },
+    (err, result) => {
+      if (err) next(err)
+      else if (!result || !result.crossword) next(new Error('No results found'))
+      else res.json(result.crossword)
+    }
+  )
+})
+
 router.get('/:id/all_crosswords', async (req, res, next) => {
   const o_id = new ObjectID(req.params.id)
   const userID = req.params.id
@@ -49,15 +62,20 @@ router.get('/:id/all_crosswords', async (req, res, next) => {
     async (err, results) => {
       if (err) next(err)
       else if (!results) next(new Error('No results found'))
-      userCrosswords
-        .find({ userID, 'crossword.id': { $in: results.saved_crosswords } })
-        .project({ crossword: 1 })
-        .toArray(function(err, results) {
-          if (err) next(err)
-          else if (!results || !results.value)
-            next(new Error('No results found'))
-          res.json(results.map(result => result.crossword))
-        })
+      else if (results.saved_crosswords && results.saved_crosswords.length) {
+        userCrosswords
+          .find({ userID, 'crossword.id': { $in: results.saved_crosswords } })
+          .project({ crossword: 1 })
+          .toArray(function(err, results) {
+            if (err) next(err)
+            else if (!results)
+              next(new Error('No results found'))
+            results && results.length
+              ? res.json(results.map(result => result.crossword))
+              : res.json([])
+          })
+      }
+      else res.json([])
     }
   )
 })
