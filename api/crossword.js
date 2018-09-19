@@ -16,4 +16,19 @@ router.get('/:id', async (req, res, next) => {
   }
 })
 
+router.post('/:id', async (req, res, next) => {
+  try {
+    crosswords.insert({ id: +req.params.id }).toArray(function(err, result) {
+      if (err) throw err
+
+      res.json(result[0])
+    })
+
+  }
+  catch (err) {
+      next(err)
+    }
+
+      
+})  
 
