@@ -2,6 +2,7 @@ const router = require('express').Router()
 const ObjectID = require('mongodb').ObjectID
 const users = require('../db/collections/users')
 const userCrosswords = require('../db/collections/userCrosswords')
+const crosswords = require('../db/collections/crosswords')
 
 module.exports = router
 
@@ -45,10 +46,18 @@ router.get('/:id/crossword/:crosswordId', async (req, res, next) => {
   const crosswordID = req.params.crosswordId
   userCrosswords.findOne(
     { userID, 'crossword.id': +crosswordID },
-    (err, result) => {
+    (err, userCrossword) => {
       if (err) next(err)
-      else if (!result || !result.crossword) next(new Error('No results found'))
-      else res.json(result.crossword)
+      else if (!userCrossword || !userCrossword.crossword) next(new Error('No results found'))
+      else { 
+      // userCrossword.crossword has everything but clues
+        crosswords.findOne({'id': +crosswordID},
+        (err, origCrossword) => {
+          if (err) next(err)
+          else if (!origCrossword || !origCrossword.clues) next(new Error('No results found'))
+          else res.json({...userCrossword.crossword, clues: origCrossword.clues})
+        })
+      }
     }
   )
 })
@@ -58,13 +67,13 @@ router.get('/:id/all_crosswords', async (req, res, next) => {
   const userID = req.params.id
   users.findOne(
     { _id: o_id },
-    { projection: { saved_crosswords: 1, _id: 0 } },
+    { projection: { savedCrosswords: 1, _id: 0 } },
     async (err, results) => {
       if (err) next(err)
       else if (!results) next(new Error('No results found'))
-      else if (results.saved_crosswords && results.saved_crosswords.length) {
+      else if (results.savedCrosswords && results.savedCrosswords.length) {
         userCrosswords
-          .find({ userID, 'crossword.id': { $in: results.saved_crosswords } })
+          .find({ userID, 'crossword.id': { $in: results.savedCrosswords } })
           .project({ crossword: 1 })
           .toArray(function(err, results) {
             if (err) next(err)

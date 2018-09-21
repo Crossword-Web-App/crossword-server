@@ -14,9 +14,7 @@ module.exports = app
 if (process.env.NODE_ENV !== 'production') require('./secrets')
 
 const createApp = () => {
-
   MongoDB.connectDB(err => {
-
     // get db and collections
     const db = MongoDB.getDB()
     const users = require('./db/collections/users')
@@ -34,17 +32,20 @@ const createApp = () => {
         'Access-Control-Allow-Headers',
         'Origin, X-Requested-With, Content-Type, Accept'
       )
-      res.header(
-        'Access-Control-Allow-Credentials', 'true'
-      )
-      next()
+      res.header('Access-Control-Allow-Credentials', 'true')
+      res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE')
+      if ('OPTIONS' == req.method) {
+        res.send(200)
+      } else {
+        next()
+      }
     })
 
     // passport registration
     passport.serializeUser((user, done) => done(null, user._id))
     passport.deserializeUser(async (_id, done) => {
-      const o_id = new ObjectID(_id);
-      await users.findOne({ '_id': o_id }, (err, user) => {
+      const o_id = new ObjectID(_id)
+      await users.findOne({ _id: o_id }, (err, user) => {
         if (err) done(err)
         else done(null, user)
       })
