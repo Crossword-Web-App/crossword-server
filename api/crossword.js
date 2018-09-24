@@ -10,9 +10,25 @@ router.get('/:id', async (req, res, next) => {
 
       res.json(result[0])
     })
-
   } catch (err) {
     next(err)
+  }
+})
+
+router.get('/', async (req, res, next) => {
+  console.log('ran with query', req.query)
+  const { count } = req.query
+  if (count) {
+    let n = await crosswords.countDocuments()
+    const getRandom = () => Math.floor(Math.random() * n)
+    console.log('count', n )
+    crosswords.find({ id: getRandom}).limit(+count).toArray((err, results) => {
+      if (err) next(err)
+      if (!results) next(new Error('No results found'))
+      else res.json(results)
+    })
+  } else {
+    next()
   }
 })
 
@@ -23,12 +39,7 @@ router.post('/:id', async (req, res, next) => {
 
       res.json(result[0])
     })
-
+  } catch (err) {
+    next(err)
   }
-  catch (err) {
-      next(err)
-    }
-
-      
-})  
-
+})
