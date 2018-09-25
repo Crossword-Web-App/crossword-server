@@ -24,11 +24,10 @@ router.post('/:id/crossword', async (req, res, next) => {
 
 router.put('/:id/crossword', async (req, res, next) => {
   const userID = req.params.id
-  const crosswordID = req.body.id
-  const crossword = req.body
+  const { id, board, spentTime } = req.body
   userCrosswords.findOneAndUpdate(
-    { userID, 'crossword.id': crosswordID },
-    { $set: { userID, crossword } },
+    { userID, 'crossword.id': id },
+    { $set: { userID, crossword: {id, board}, spentTime } },
     {
       upsert: true,
       returnOriginal: false // return the updated document
