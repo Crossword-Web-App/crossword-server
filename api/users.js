@@ -27,7 +27,7 @@ router.put('/:id/crossword', async (req, res, next) => {
   const { id, board, spentTime } = req.body
   userCrosswords.findOneAndUpdate(
     { userID, 'crossword.id': id },
-    { $set: { userID, crossword: {id, board}, spentTime } },
+    { $set: { userID, crossword: { id, board }, spentTime } },
     {
       upsert: true,
       returnOriginal: false // return the updated document
@@ -47,14 +47,28 @@ router.get('/:id/crossword/:crosswordId', async (req, res, next) => {
     { userID, 'crossword.id': +crosswordID },
     (err, userCrossword) => {
       if (err) next(err)
-      else if (!userCrossword || !userCrossword.crossword) next(new Error('No results found'))
-      else { 
-      // userCrossword.crossword has everything but clues
-        crosswords.findOne({'id': +crosswordID},
-        (err, origCrossword) => {
+      else {
+        // get original crossword so clues can be merged
+        crosswords.findOne({ id: +crosswordID }, (err, origCrossword) => {
           if (err) next(err)
-          else if (!origCrossword || !origCrossword.clues) next(new Error('No results found'))
-          else res.json({...userCrossword.crossword, clues: origCrossword.clues})
+          else if (!origCrossword || !origCrossword.clues)
+            // without clues, we cannot send full crossword; throw error
+            next(new Error('No results found'))
+          else if (
+            !userCrossword ||
+            !userCrossword.crossword ||
+            !userCrossword.spentTime
+          ) {
+            // if no userCrossword exists, send default crossword template for id
+            res.json(origCrossword)
+          } else {
+            // merge user data with crossword template and send
+            res.json({
+              ...userCrossword.crossword,
+              spentTime: userCrossword.spentTime,
+              clues: origCrossword.clues
+            })
+          }
         })
       }
     }
@@ -76,14 +90,12 @@ router.get('/:id/all_crosswords', async (req, res, next) => {
           .project({ crossword: 1 })
           .toArray(function(err, results) {
             if (err) next(err)
-            else if (!results)
-              next(new Error('No results found'))
+            else if (!results) next(new Error('No results found'))
             results && results.length
               ? res.json(results.map(result => result.crossword))
               : res.json([])
           })
-      }
-      else res.json([])
+      } else res.json([])
     }
   )
 })
