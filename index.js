@@ -7,7 +7,6 @@ const ObjectID = require('mongodb').ObjectID
 const passport = require('passport')
 const MongoDB = require('./db/db')
 const PORT = process.env.PORT || 8080
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000'
 const app = express()
 module.exports = app
 
@@ -27,7 +26,10 @@ const createApp = () => {
     app.use(express.urlencoded({ extended: true }))
 
     app.use(function(req, res, next) {
-      res.header('Access-Control-Allow-Origin', CLIENT_URL)
+      res.header(
+        'Access-Control-Allow-Origin',
+        process.env.CLIENT_URL || 'http://localhost:3000'
+      )
       res.header(
         'Access-Control-Allow-Headers',
         'Origin, X-Requested-With, Content-Type, Accept'
