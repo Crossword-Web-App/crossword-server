@@ -87,12 +87,12 @@ router.get('/:id/all_crosswords', async (req, res, next) => {
       else if (results.savedCrosswords && results.savedCrosswords.length) {
         userCrosswords
           .find({ userID, 'crossword.id': { $in: results.savedCrosswords } })
-          .project({ crossword: 1 })
+          .project({ crossword: 1, spentTime: 1 })
           .toArray(function(err, results) {
             if (err) next(err)
             else if (!results) next(new Error('No results found'))
             results && results.length
-              ? res.json(results.map(result => result.crossword))
+              ? res.json(results)
               : res.json([])
           })
       } else res.json([])
