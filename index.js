@@ -26,8 +26,15 @@ const createApp = () => {
     app.use(express.json())
     app.use(express.urlencoded({ extended: true }))
 
+    console.log('RUNNING CREATE APP CODE')
+
     app.use(function(req, res, next) {
-      res.header('Access-Control-Allow-Origin', CLIENT_URL)
+      console.log('CLIENT_URL', process.env.CLIENT_URL)
+      console.log('process.env.CLIENT_URL', process.env.CLIENT_URL)
+      res.header(
+        'Access-Control-Allow-Origin',
+        process.env.CLIENT_URL || 'http://localhost:3000'
+      )
       res.header(
         'Access-Control-Allow-Headers',
         'Origin, X-Requested-With, Content-Type, Accept'
