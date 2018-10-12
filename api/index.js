@@ -3,6 +3,8 @@ module.exports = router
 
 router.use('/crossword', require('./crossword'))
 router.use('/users', require('./users'))
+router.use('/blackSquareTemplates', require('./blackSquareTemplates'))
+
 
 router.use((req, res, next) => {
   const error = new Error('Not Found')
